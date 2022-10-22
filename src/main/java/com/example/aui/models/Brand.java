@@ -2,19 +2,25 @@ package com.example.aui.models;
 
 import lombok.*;
 
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(schema = "PUBLIC", name = "BRANDS")
 public class Brand {
 
+    @Transient
     private static Long brandIdSeq = 0L;
-    @Id
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
     private String name;
     private Double rating;
+    @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Beer> beers;
 
     @Builder
@@ -23,15 +29,5 @@ public class Brand {
         this.name = name;
         this.rating = rating;
         this.beers = new ArrayList<>();
-    }
-
-    @Override
-    public String toString() {
-        return "Brand{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", rating=" + rating +
-                ", beers=" + beers.stream().map(Beer::getName).toList() +
-                '}';
     }
 }

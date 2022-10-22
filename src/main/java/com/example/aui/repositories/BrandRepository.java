@@ -1,47 +1,34 @@
 package com.example.aui.repositories;
 
-import com.example.aui.components.BeerComponent;
 import com.example.aui.models.Brand;
-import lombok.AllArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
-@AllArgsConstructor
 @Repository
-public class BrandRepository {
+@Transactional
+public interface BrandRepository extends JpaRepository<Brand, Long> {
 
-    private final BeerComponent beerComponent;
+    @Modifying
+    @Query(value = "insert into public.brands (name, rating) values (:name, :rating)", nativeQuery = true)
+    void create(@Param("name") String name, @Param("rating") Double rating);
 
-    public void save(Brand brand) {
-        beerComponent.getBrands().add(brand);
-    }
+    @Query(value = "select * from public.brands b where b.id = :id", nativeQuery = true)
+    Brand read(@Param("id") Long id);
 
-    public Brand getById(Long id) {
-        return beerComponent.getBrands().stream()
-                .filter(brand -> brand.getId().equals(id))
-                .findAny()
-                .orElse(null);
-    }
+    @Query(value = "select * from public.brands", nativeQuery = true)
+    List<Brand> readAll();
 
-    public Brand getByName(String name) {
-        return beerComponent.getBrands().stream()
-                .filter(brand -> brand.getName().equals(name))
-                .findAny()
-                .orElse(null);
-    }
+    @Modifying
+    @Query(value = "update public.brands set name = :name, rating = :rating where PUBLIC.brands.id = :id", nativeQuery = true)
+    void update(@Param("id") Long id, @Param("name") String name, @Param("rating") Double rating);
 
-    public List<Brand> getAll() {
-        return beerComponent.getBrands();
-    }
-
-    public void delete(Brand brand) {
-        if(beerComponent.getBrands().contains(brand)) {
-            beerComponent.setBeers(beerComponent.getBeers().stream()
-                    .filter(beer -> !beer.getBrand().equals(brand))
-                    .toList());
-            beerComponent.getBrands().remove(brand);
-        }
-    }
-
+    @Modifying
+    @Query(value = "delete from public.brands where public.brands.id = :id", nativeQuery = true)
+    void delete(@Param("id") Long id);
 }

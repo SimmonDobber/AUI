@@ -2,17 +2,22 @@ package com.example.aui.models;
 
 import lombok.*;
 
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Getter
 @Setter
+@Entity
+@NoArgsConstructor
+@Table(schema = "PUBLIC", name = "BEERS")
 public class Beer {
 
+    @Transient
     private static Long beerIdSeq = 0L;
-    @Id
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
     private String name;
     private Double voltage;
+    @ManyToOne(fetch = FetchType.LAZY)
     private Brand brand;
 
     @Builder
@@ -21,15 +26,5 @@ public class Beer {
         this.name = name;
         this.voltage = voltage;
         this.brand = brand;
-    }
-
-    @Override
-    public String toString() {
-        return "Beer{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", voltage=" + voltage +
-                ", brand=" + brand.getName() +
-                '}';
     }
 }

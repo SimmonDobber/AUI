@@ -1,35 +1,66 @@
 package com.example.aui.services;
 
-import com.example.aui.models.Brand;
+import com.example.aui.dtos.beer.ReadAllBeerResponseDTO;
+import com.example.aui.dtos.beer.ReadBeerResponseDTO;
+import com.example.aui.dtos.brand.CreateBrandRequestDTO;
+import com.example.aui.dtos.brand.ReadAllBrandResponseDTO;
+import com.example.aui.dtos.brand.ReadBrandResponseDTO;
+import com.example.aui.dtos.brand.UpdateBrandRequestDTO;
+import com.example.aui.mappers.BrandMapper;
+import com.example.aui.models.Beer;
+import com.example.aui.repositories.BeerRepository;
 import com.example.aui.repositories.BrandRepository;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
-@AllArgsConstructor
 @Service
 public class BrandService {
 
     private final BrandRepository brandRepository;
+    private final BeerRepository beerRepository;
 
-    public void save(Brand brand) {
-        brandRepository.save(brand);
+    @Autowired
+    public BrandService(BrandRepository brandRepository, BeerRepository beerRepository) {
+        this.brandRepository = brandRepository;
+        this.beerRepository = beerRepository;
     }
 
-    public Brand getById(Long id) {
-        return brandRepository.getById(id);
+    public void create(CreateBrandRequestDTO dto) {
+        brandRepository.create(dto.getName(), dto.getRating());
     }
 
-    public Brand getByName(String name) {
-        return brandRepository.getByName(name);
+    public ReadBrandResponseDTO read(Long id) {
+        ReadBrandResponseDTO dto = BrandMapper.toResponseDto(brandRepository.read(id));
+        if(dto != null) {
+            dto.setBeers(beerRepository.searchAllByBrandId(id).stream().map(Beer::getName).toList());
+        }
+        return dto;
     }
 
-    public List<Brand> getAll() {
-        return brandRepository.getAll();
+    public ReadAllBrandResponseDTO readAll() {
+        ReadAllBrandResponseDTO dtos = BrandMapper.toResponseDtoList(brandRepository.readAll());
+        if(dtos != null) {
+            for(ReadBrandResponseDTO dto : dtos.getBrands()) {
+                dto.setBeers(beerRepository.searchAllByBrandId(dto.getId()).stream().map(Beer::getName).toList());
+            }
+        }
+        return dtos;
     }
 
-    public void delete(Brand brand) {
-        brandRepository.delete(brand);
+    public boolean update(UpdateBrandRequestDTO dto) {
+        if(read(dto.getId()) == null) {
+            return false;
+        }
+        brandRepository.update(dto.getId(), dto.getName(), dto.getRating());
+        return true;
+    }
+
+    public boolean delete(Long id) {
+        if(read(id) == null) {
+            return false;
+        }
+        beerRepository.deleteAllByBrandId(id);
+        brandRepository.delete(id);
+        return true;
     }
 }

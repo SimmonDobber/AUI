@@ -1,50 +1,42 @@
 package com.example.aui.repositories;
 
-import com.example.aui.components.BeerComponent;
+import com.example.aui.dtos.beer.UpdateBeerRequestDTO;
 import com.example.aui.models.Beer;
-import lombok.AllArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
+import javax.transaction.Transactional;
 import java.util.List;
 
-@AllArgsConstructor
 @Repository
-public class BeerRepository {
+@Transactional
+public interface BeerRepository extends JpaRepository<Beer, Long> {
 
-    private final BeerComponent beerComponent;
+    @Modifying
+    @Query(value = "insert into public.beers (name, voltage, brand_id) values (:name, :voltage, :brandId)", nativeQuery = true)
+    void create(@Param("name") String name, @Param("voltage") Double voltage, @Param("brandId") Long brandId);
 
-    public void save(Beer beer) {
-        if(beerComponent.getBrands().contains(beer.getBrand())) {
-            List<Beer> beers = new ArrayList<>(beerComponent.getBeers());
-            beers.add(beer);
-            beerComponent.setBeers(beers);
-            beer.getBrand().getBeers().add(beer);
-        }
-    }
+    @Query(value = "select * from public.beers b where b.id = :id", nativeQuery = true)
+    Beer read(@Param("id") Long id);
 
-    public Beer getById(Long id) {
-        return beerComponent.getBeers().stream()
-                .filter(beer -> beer.getId().equals(id))
-                .findAny()
-                .orElse(null);
-    }
+    @Query(value = "select * from public.beers", nativeQuery = true)
+    List<Beer> readAll();
 
-    public Beer getByName(String name) {
-        return beerComponent.getBeers().stream()
-                .filter(beer -> beer.getName().equals(name))
-                .findAny()
-                .orElse(null);
-    }
+    @Modifying
+    @Query(value = "update public.beers set name = :name, voltage = :voltage where public.beers.id = :id", nativeQuery = true)
+    void update(@Param("id") Long id, @Param("name") String name, @Param("voltage") Double voltage);
 
-    public List<Beer> getAll() {
-        return beerComponent.getBeers();
-    }
+    @Modifying
+    @Query(value = "delete from public.beers where public.beers.id = :id", nativeQuery = true)
+    void delete(@Param("id") Long id);
 
-    public void delete(Beer beer) {
-        if(beerComponent.getBeers().contains(beer)) {
-            beerComponent.getBeers().remove(beer);
-            beer.getBrand().getBeers().remove(beer);
-        }
-    }
+    @Query(value = "select * from public.beers where public.beers.brand_id = :id", nativeQuery = true)
+    List<Beer> searchAllByBrandId(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "delete from public.beers where public.beers.brand_id = :id", nativeQuery = true)
+    void deleteAllByBrandId(@Param("id") Long id);
 }
